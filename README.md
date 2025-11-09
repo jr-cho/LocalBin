@@ -1,80 +1,46 @@
 # LocalBin
-LocalBin create a local file share cloud server
 
-## How to Contribute:
+### A Distributed File Sharing Cloud Server with Hybrid C/Python Architecture
 
-### 0. Make sure that your git is connected to your github
+---
 
-Use an ssh key
+## Overview
 
-### 1. Clone the Main Repository:
+**LocalBin** is a **socket based distributed file sharing system** designed to simulate a small scale cloud storage environment.
+It allows multiple clients to securely **upload**, **download**, **delete**, and **manage directories** on a remote server.
 
-```
-git@github.com:jr-cho/LocalBin.git
-```
-### 2. Create a New Branch for Each Task:
+The project combines **high-performance C networking** with **Python-based analytics and user interface**, providing both low level efficiency and high level flexibility.
 
-Always create a branch for your work instead of pushing to main:
+---
 
-```
-git checkout -b feature/<short-description>
-```
+## System Architecture
 
-Example:
-- feature/file-upload
-- feature/authentication
-- bugfix/upload-permissions
-- refactor/config-system
-
-### 3. Set Up Your Environment:
-
-Install UV Project and Package Manager for Python.
-
-#### i. Install Dependencies:
-```
-uv sync
-```
-
-### 4. Commit Your Changes:
+LocalBin uses a **Client–Server model** with three main layers:
 
 ```
-git add .
-git commit -m "Add file upload endpoint with checksum verification"
-git push origin feature/file-upload // this is an example
+[ Python CLI (User Interface) ]
+        │
+        ▼
+[ C Client Library (libclient.so) ]
+        │
+        ▼
+[ C Multithreaded Server ]
+        │
+        ▼
+[ File Storage + Logging ]
+        │
+        ▼
+[ Python Data Analysis (Metrics, Graphs, Reports) ]
 ```
 
-### 5. Open a Pull Request:
-1. Go the GitHub Repository
-2. Click "Compare & pull request"
-3. Ensure:
-    - Base branch: `main`
-    - Compare branchL: your feature branch
-4. Write a clear description of your changes and submit
+* **Server (C)** – Handles socket connections, authentication, and file operations.
+* **Client Library (C)** – Exposes low level communication routines via a shared object (`libclient.so`).
+* **Interface (Python)** – Provides a CLI and connects to the C client via `ctypes`.
+* **Analytics (Python)** – Parses logs, measures performance, and visualizes results.
 
-### 6. After the merge:
-After the review and approval of the PR. Your branch gets merged into the `main` branch. Now delete the feature branch to keep the tree clean.
+--
 
-```
-git branch -d feature/file-upload
-git push origin --delete feature/file-upload
-```
+## License
 
-### 7. Sync with the latest code:
-
-Before starting new work, always update your local repo:
-
-```
-git checkout main
-git pull origin main
-uv sync
-```
-
-If you’re mid branch and need to update it:
-
-```
-git fetch origin
-git rebase origin/main
-uv sync
-```
-
-
+MIT License © 2025 – Our Dev Team
+This project was developed for educational use as part of CNT3004 – Socket-Based Networked File Sharing Cloud Server.
