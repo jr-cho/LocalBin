@@ -42,5 +42,4 @@ LocalBin uses a **Client–Server model** with three main layers:
 
 ## License
 
-MIT License © 2025 – Our Dev Team
-This project was developed for educational use as part of CNT3004 – Socket-Based Networked File Sharing Cloud Server.
+MIT License © 2025 – Our Dev Team <br /> This project was developed for educational use as part of CNT3004 – Socket-Based Networked File Sharing Cloud Server.
