@@ -38,7 +38,7 @@ LocalBin uses a **Client–Server model** with three main layers:
 * **Interface (Python)** – Provides a CLI and connects to the C client via `ctypes`.
 * **Analytics (Python)** – Parses logs, measures performance, and visualizes results.
 
---
+---
 
 ## License
 
