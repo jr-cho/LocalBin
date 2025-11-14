@@ -51,40 +51,50 @@ class LocalBinApp(tk.Tk):
         self._build_ui()
 
     def _build_ui(self):
-        ### UPDATED 1:32 — bigger blue title text
-        tk.Label(
-            self,
-            text="LocalBin File Sharing Client",
-            fg="#00ffcc",
-            bg="#181818",
-            font=("Segoe UI", 25, "bold")
-        ).pack(pady=10)
-        form = tk.Frame(self, bg="#181818")
-        form.pack(pady=5)
+        def _build_ui(self):
+    tk.Label(
+        self,
+        text="LocalBin File Sharing Client",
+        fg="#00ffcc",
+        bg="#181818",
+        font=("Segoe UI", 25, "bold")
+    ).pack(pady=10)
 
-        self.host_entry = self._entry(form, "Server Host:", "127.0.0.1")
-        self.port_entry = self._entry(form, "Port:", "8080")
-        self.user_entry = self._entry(form, "Username:", "testuser")
-        self.pass_entry = self._entry(form, "Password:", "password", show="*")
+    form = tk.Frame(self, bg="#181818")
+    form.pack(pady=5)
 
-        # Buttons frame
-        btn_frame = tk.Frame(self, bg="#181818")
-        btn_frame.pack(pady=10)
+    self.host_entry = self._entry(form, "Server Host:", "127.0.0.1")
+    self.port_entry = self._entry(form, "Port:", "8080")
+    self.user_entry = self._entry(form, "Username:", "testuser")
+    self.pass_entry = self._entry(form, "Password:", "password", show="*")
 
-        self.connect_btn = ttk.Button(btn_frame, text="Connect", command=self.connect)
-        self.upload_btn = ttk.Button(btn_frame, text="Upload File", command=self.upload, state=tk.DISABLED)
-        self.download_btn = ttk.Button(btn_frame, text="Download File", command=self.download, state=tk.DISABLED)
-        self.disconnect_btn = ttk.Button(btn_frame, text="Disconnect", command=self.disconnect, state=tk.DISABLED)
+    # Buttons frame
+    btn_frame = tk.Frame(self, bg="#181818")
+    btn_frame.pack(pady=10, fill=tk.X)  # <-- fill the row horizontally
 
-        self.connect_btn.grid(row=0, column=0, padx=10)
-        self.upload_btn.grid(row=0, column=1, padx=10)
-        self.download_btn.grid(row=0, column=2, padx=10)
-        self.disconnect_btn.grid(row=0, column=3, padx=10)
+    self.connect_btn = ttk.Button(btn_frame, text="Connect", command=self.connect)
+    self.upload_btn = ttk.Button(btn_frame, text="Upload File", command=self.upload, state=tk.DISABLED)
+    self.download_btn = ttk.Button(btn_frame, text="Download File", command=self.download, state=tk.DISABLED)
+    self.disconnect_btn = ttk.Button(btn_frame, text="Disconnect", command=self.disconnect, state=tk.DISABLED)
 
-        # Log output
-        self.log_box = tk.Text(self, height=10, width=60, bg="#202020", fg="#00ff00",
-                               font=("Consolas", 10), wrap=tk.WORD)
-        self.log_box.pack(pady=10)
+    # Place all buttons in the same row
+    self.connect_btn.grid(row=0, column=0, padx=10, sticky="ew")
+    self.upload_btn.grid(row=0, column=1, padx=10, sticky="ew")
+    self.download_btn.grid(row=0, column=2, padx=10, sticky="ew")
+    self.disconnect_btn.grid(row=0, column=3, padx=10, sticky="ew")
+
+    # Log output
+    self.log_box = tk.Text(
+        self,
+        height=10,
+        width=60,
+        bg="#202020",
+        fg="#00ff00",
+        font=("Consolas", 12),
+        wrap=tk.WORD
+    )
+    self.log_box.pack(pady=10)
+
 
     def _entry(self, parent, label, default="", show=None):
         frame = tk.Frame(parent, bg="#181818")
