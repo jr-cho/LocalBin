@@ -57,7 +57,7 @@ class LocalBinApp(tk.Tk):
             text="LocalBin File Sharing Client",
             fg="#00ffcc",
             bg="#181818",
-            font=("Segoe UI", 20, "bold")
+            font=("Segoe UI", 25, "bold")
         ).pack(pady=10)
 
         form = tk.Frame(self, bg="#181818")
@@ -75,9 +75,8 @@ class LocalBinApp(tk.Tk):
         self.connect_btn = ttk.Button(btn_frame, text="Connect", command=self.connect)
         self.upload_btn = ttk.Button(btn_frame, text="Upload File", command=self.upload, state=tk.DISABLED)
         self.download_btn = ttk.Button(btn_frame, text="Download File", command=self.download, state=tk.DISABLED)
-        ### REMOVED — Disconnect used to be here
-        # self.disconnect_btn = ttk.Button(btn_frame, text="Disconnect", command=self.disconnect, state=tk.DISABLED)
-        # self.disconnect_btn.grid(row=0, column=3, padx=10)
+        self.disconnect_btn = ttk.Button(btn_frame, text="Disconnect", command=self.disconnect, state=tk.DISABLED)
+        self.disconnect_btn.grid(row=0, column=3, padx=10)
         self.connect_btn.grid(row=0, column=0, padx=10)
         self.upload_btn.grid(row=0, column=1, padx=10)
         self.download_btn.grid(row=0, column=2, padx=10)
@@ -94,19 +93,7 @@ class LocalBinApp(tk.Tk):
             wrap=tk.WORD
         )
         self.log_box.pack(pady=10)
-
-    ### ADDED — Bottom bar with Disconnect button
-        bottom_bar = tk.Frame(self, bg="#181818")
-        bottom_bar.pack(pady=5)
-
-        self.disconnect_btn = ttk.Button(
-            bottom_bar,
-            text="Disconnect",
-            command=self.disconnect,
-            state=tk.DISABLED
-        )
-        self.disconnect_btn.pack()
-
+        
     def _entry(self, parent, label, default="", show=None):
         frame = tk.Frame(parent, bg="#181818")
         frame.pack(pady=2)
