@@ -37,7 +37,7 @@ class LocalBinApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("LocalBin Client")
-        self.geometry("650x550")
+        self.geometry("650x700")
         self.configure(bg="#1a1a1a")
         self.resizable(False, False)
 
