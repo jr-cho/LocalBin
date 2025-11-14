@@ -64,7 +64,7 @@ class LocalBinApp(tk.Tk):
             text="LocalBin File Sharing",
             fg="#00d9ff",
             bg="#1e1e1e",
-            font=("Segoe UI", 35, "bold")
+            font=("Segoe UI", 50, "bold")
         )
         title_label.pack(pady=20)
 
