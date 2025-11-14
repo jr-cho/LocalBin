@@ -158,3 +158,7 @@ class LocalBinApp(tk.Tk):
         entry.insert(0, default)
         entry.pack(side=tk.LEFT)
         return entry
+
+if __name__ == "__main__":
+    app = LocalBinApp()
+    app.mainloop()
