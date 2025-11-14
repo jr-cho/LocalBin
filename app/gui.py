@@ -37,22 +37,41 @@ class LocalBinApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("LocalBin Client")
-        self.geometry("520x380")
-        self.configure(bg="#181818")
+        self.geometry("650x700")
+        self.configure(bg="#1a1a1a")
         self.resizable(False, False)
 
         self.style = ttk.Style()
-        self.style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=6)
-        self.style.configure("TLabel", foreground="white", background="#181818", font=("Segoe UI", 10))
+        self.style.configure("TButton", font=("Segoe UI", 11, "bold"), padding=12)
+        self.style.configure("TLabel", foreground="#e8e8e8", background="#1a1a1a", font=("Segoe UI", 12))
+        self.style.configure("TEntry", font=("Segoe UI", 11), padding=8)
 
         self._build_ui()
 
     def _build_ui(self):
-        tk.Label(self, text="LocalBin File Sharing Client", fg="#00ffcc",
-                 bg="#181818", font=("Segoe UI", 16, "bold")).pack(pady=10)
+        # Title Section
+        title_frame = tk.Frame(self, bg="#1a1a1a")
+        title_frame.pack(pady=25)
+        
+        tk.Label(
+            title_frame, 
+            text="LocalBin File Sharing Client", 
+            fg="#00ffcc",
+            bg="#1a1a1a", 
+            font=("Segoe UI", 26, "bold")
+        ).pack()
+        
+        tk.Label(
+            title_frame,
+            text="Secure File Transfer System",
+            fg="#888888",
+            bg="#1a1a1a",
+            font=("Segoe UI", 10)
+        ).pack(pady=(5, 0))
 
-        form = tk.Frame(self, bg="#181818")
-        form.pack(pady=5)
+        # Connection Form
+        form = tk.Frame(self, bg="#1a1a1a")
+        form.pack(pady=15)
 
         self.host_entry = self._entry(form, "Server Host:", "127.0.0.1")
         self.port_entry = self._entry(form, "Port:", "8080")
@@ -60,29 +79,68 @@ class LocalBinApp(tk.Tk):
         self.pass_entry = self._entry(form, "Password:", "password", show="*")
 
         # Buttons frame
-        btn_frame = tk.Frame(self, bg="#181818")
-        btn_frame.pack(pady=10)
+        btn_frame = tk.Frame(self, bg="#1a1a1a")
+        btn_frame.pack(pady=20, padx=40, fill=tk.X)
+        
+        for i in range(4):
+            btn_frame.columnconfigure(i, weight=1)
 
         self.connect_btn = ttk.Button(btn_frame, text="Connect", command=self.connect)
         self.upload_btn = ttk.Button(btn_frame, text="Upload File", command=self.upload, state=tk.DISABLED)
         self.download_btn = ttk.Button(btn_frame, text="Download File", command=self.download, state=tk.DISABLED)
         self.disconnect_btn = ttk.Button(btn_frame, text="Disconnect", command=self.disconnect, state=tk.DISABLED)
 
-        self.connect_btn.grid(row=0, column=0, padx=10)
-        self.upload_btn.grid(row=0, column=1, padx=10)
-        self.download_btn.grid(row=0, column=2, padx=10)
-        self.disconnect_btn.grid(row=0, column=3, padx=10)
+        self.connect_btn.grid(row=0, column=0, padx=6, sticky="ew")
+        self.upload_btn.grid(row=0, column=1, padx=6, sticky="ew")
+        self.download_btn.grid(row=0, column=2, padx=6, sticky="ew")
+        self.disconnect_btn.grid(row=0, column=3, padx=6, sticky="ew")
 
-        # Log output
-        self.log_box = tk.Text(self, height=10, width=60, bg="#202020", fg="#00ff00",
-                               font=("Consolas", 10), wrap=tk.WORD)
-        self.log_box.pack(pady=10)
+        # Log Section
+        log_container = tk.Frame(self, bg="#1a1a1a")
+        log_container.pack(pady=10, padx=40, fill=tk.BOTH, expand=True)
+        
+        log_header = tk.Frame(log_container, bg="#1a1a1a")
+        log_header.pack(fill=tk.X, pady=(0, 10))
+        
+        tk.Label(
+            log_header,
+            text="Activity Log",
+            fg="#00ffcc",
+            bg="#1a1a1a",
+            font=("Segoe UI", 12, "bold"),
+            anchor="w"
+        ).pack(side=tk.LEFT)
+        
+        self.log_box = tk.Text(
+            log_container, 
+            height=12, 
+            bg="#252525", 
+            fg="#00ff88",
+            font=("Consolas", 10), 
+            wrap=tk.WORD,
+            relief=tk.FLAT,
+            borderwidth=0,
+            padx=15,
+            pady=12,
+            insertbackground="#00ffcc"
+        )
+        self.log_box.pack(fill=tk.BOTH, expand=True)
 
     def _entry(self, parent, label, default="", show=None):
-        frame = tk.Frame(parent, bg="#181818")
-        frame.pack(pady=2)
-        tk.Label(frame, text=label, width=12, anchor="e").pack(side=tk.LEFT, padx=3)
-        entry = ttk.Entry(frame, show=show, width=30)
+        frame = tk.Frame(parent, bg="#1a1a1a")
+        frame.pack(pady=8)
+        
+        tk.Label(
+            frame, 
+            text=label, 
+            width=14, 
+            anchor="e",
+            fg="#e8e8e8",
+            bg="#1a1a1a",
+            font=("Segoe UI", 12)
+        ).pack(side=tk.LEFT, padx=10)
+        
+        entry = ttk.Entry(frame, show=show, width=32, font=("Segoe UI", 11))
         entry.insert(0, default)
         entry.pack(side=tk.LEFT)
         return entry
@@ -103,6 +161,7 @@ class LocalBinApp(tk.Tk):
                 self.upload_btn.config(state=tk.NORMAL)
                 self.download_btn.config(state=tk.NORMAL)
                 self.disconnect_btn.config(state=tk.NORMAL)
+                self.connect_btn.config(state=tk.DISABLED)
             else:
                 self.log("[ERROR] Authentication failed.")
                 messagebox.showerror("Error", "Authentication failed.")
@@ -143,6 +202,7 @@ class LocalBinApp(tk.Tk):
         self.upload_btn.config(state=tk.DISABLED)
         self.download_btn.config(state=tk.DISABLED)
         self.disconnect_btn.config(state=tk.DISABLED)
+        self.connect_btn.config(state=tk.NORMAL)
         messagebox.showinfo("LocalBin", "Disconnected from server.")
 
 
