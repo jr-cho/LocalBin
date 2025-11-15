@@ -1,6 +1,7 @@
 #include "client.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <netdb.h>
 
 int client_connect(Client *c, const char *host, int port) {
     if (!c) return -1;
@@ -12,26 +13,70 @@ int client_connect(Client *c, const char *host, int port) {
         return -1;
     }
 
+    // Set socket timeout to prevent indefinite hanging
+    struct timeval timeout;
+    timeout.tv_sec = 10;  // 10 second timeout
+    timeout.tv_usec = 0;
+    setsockopt(c->sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    setsockopt(c->sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+
     c->server_addr.sin_family = AF_INET;
     c->server_addr.sin_port = htons(port);
 
+    // Try direct IP conversion first
     if (inet_pton(AF_INET, host, &c->server_addr.sin_addr) <= 0) {
-        log_message("ERROR", "client_connect: invalid server address");
-        close(c->sockfd);
-        return -1;
+        // If that fails, try hostname resolution
+        struct addrinfo hints, *result;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+
+        char msg[256];
+        snprintf(msg, sizeof(msg), "Attempting to resolve hostname: %s", host);
+        log_message("INFO", msg);
+
+        if (getaddrinfo(host, NULL, &hints, &result) != 0) {
+            log_message("ERROR", "client_connect: hostname resolution failed");
+            close(c->sockfd);
+            return -1;
+        }
+
+        // Use the first result
+        struct sockaddr_in *addr = (struct sockaddr_in *)result->ai_addr;
+        c->server_addr.sin_addr = addr->sin_addr;
+        freeaddrinfo(result);
+
+        char resolved_ip[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &c->server_addr.sin_addr, resolved_ip, INET_ADDRSTRLEN);
+        snprintf(msg, sizeof(msg), "Resolved %s to %s", host, resolved_ip);
+        log_message("INFO", msg);
     }
 
-    if (connect(c->sockfd, (struct sockaddr*)&c->server_addr, sizeof(c->server_addr)) < 0) {
-        log_message("ERROR", "client_connect: connect() failed");
+    char connect_msg[256];
+    char ip_str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &c->server_addr.sin_addr, ip_str, INET_ADDRSTRLEN);
+    snprintf(connect_msg, sizeof(connect_msg), 
+             "Attempting connection to %s:%d", ip_str, port);
+    log_message("INFO", connect_msg);
+
+    if (connect(c->sockfd, (struct sockaddr*)&c->server_addr, 
+                sizeof(c->server_addr)) < 0) {
+        snprintf(connect_msg, sizeof(connect_msg), 
+                 "client_connect: connect() failed to %s:%d - %s", 
+                 ip_str, port, strerror(errno));
+        log_message("ERROR", connect_msg);
         close(c->sockfd);
         return -1;
     }
 
     c->is_connected = 1;
-    log_message("INFO", "Client connected to server");
+    snprintf(connect_msg, sizeof(connect_msg), 
+             "Client successfully connected to %s:%d", ip_str, port);
+    log_message("INFO", connect_msg);
     return 0;
 }
 
+// Rest of the functions remain the same...
 int client_auth(Client *c, const char *username, const char *password) {
     if (!c || !c->is_connected) return -1;
 
