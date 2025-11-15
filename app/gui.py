@@ -6,10 +6,19 @@ from tkinter import filedialog, messagebox, simpledialog, ttk
 # === Load C client shared library ===
 lib = ctypes.CDLL(os.path.abspath("bin/client.so"))
 
+# FIXED: Proper sockaddr_in structure definition
+class sockaddr_in(ctypes.Structure):
+    _fields_ = [
+        ("sin_family", ctypes.c_ushort),  # sa_family_t
+        ("sin_port", ctypes.c_ushort),    # in_port_t
+        ("sin_addr", ctypes.c_byte * 4),  # struct in_addr
+        ("sin_zero", ctypes.c_byte * 8),  # padding
+    ]
+
 class Client(ctypes.Structure):
     _fields_ = [
         ("sockfd", ctypes.c_int),
-        ("server_addr", ctypes.c_byte * 16),
+        ("server_addr", sockaddr_in),      # FIXED: proper structure
         ("is_connected", ctypes.c_int)
     ]
 
@@ -73,7 +82,9 @@ class LocalBinApp(tk.Tk):
         form = tk.Frame(self, bg="#1a1a1a")
         form.pack(pady=15)
 
-        self.host_entry = self._entry(form, "Server Host:", "127.0.0.1")
+        # CHANGED: Default to empty or use environment variable
+        default_host = os.environ.get('LOCALBIN_HOST', '127.0.0.1')
+        self.host_entry = self._entry(form, "Server Host:", default_host)
         self.port_entry = self._entry(form, "Port:", "8080")
         self.user_entry = self._entry(form, "Username:", "testuser")
         self.pass_entry = self._entry(form, "Password:", "password", show="*")
@@ -148,38 +159,76 @@ class LocalBinApp(tk.Tk):
     def log(self, msg):
         self.log_box.insert(tk.END, msg + "\n")
         self.log_box.see(tk.END)
+        self.update_idletasks()  # Force GUI update
 
     def connect(self):
-        host = self.host_entry.get().encode()
-        port = int(self.port_entry.get())
-        if lib.client_connect(ctypes.byref(client), host, port) == 0:
-            self.log("[INFO] Connected to server.")
+        host = self.host_entry.get().strip()
+        if not host:
+            self.log("[ERROR] Server host cannot be empty")
+            messagebox.showerror("Error", "Please enter a server host")
+            return
+            
+        try:
+            port = int(self.port_entry.get())
+            if port < 1 or port > 65535:
+                raise ValueError("Port out of range")
+        except ValueError as e:
+            self.log(f"[ERROR] Invalid port: {e}")
+            messagebox.showerror("Error", "Please enter a valid port (1-65535)")
+            return
+        
+        self.log(f"[INFO] Attempting to connect to {host}:{port}...")
+        self.update_idletasks()
+        
+        # Encode host for C function
+        host_encoded = host.encode()
+        
+        result = lib.client_connect(ctypes.byref(client), host_encoded, port)
+        
+        if result == 0:
+            self.log(f"[INFO] Connected to server at {host}:{port}")
             user = self.user_entry.get().encode()
             pw = self.pass_entry.get().encode()
+            
+            self.log("[INFO] Authenticating...")
+            self.update_idletasks()
+            
             if lib.client_auth(ctypes.byref(client), user, pw) == 0:
-                self.log(f"[INFO] Authenticated as {self.user_entry.get()}.")
+                self.log(f"[INFO] Authenticated as {self.user_entry.get()}")
                 self.upload_btn.config(state=tk.NORMAL)
                 self.download_btn.config(state=tk.NORMAL)
                 self.disconnect_btn.config(state=tk.NORMAL)
                 self.connect_btn.config(state=tk.DISABLED)
+                self.host_entry.config(state=tk.DISABLED)
+                self.port_entry.config(state=tk.DISABLED)
+                self.user_entry.config(state=tk.DISABLED)
+                self.pass_entry.config(state=tk.DISABLED)
             else:
-                self.log("[ERROR] Authentication failed.")
-                messagebox.showerror("Error", "Authentication failed.")
+                self.log("[ERROR] Authentication failed - check username/password")
+                messagebox.showerror("Error", "Authentication failed. Check credentials.")
+                lib.client_disconnect(ctypes.byref(client))
         else:
-            self.log("[ERROR] Could not connect to server.")
-            messagebox.showerror("Error", "Failed to connect to server.")
+            self.log(f"[ERROR] Could not connect to {host}:{port}")
+            self.log("[HINT] Check: 1) Server is running, 2) Firewall allows port, 3) Correct IP/hostname")
+            messagebox.showerror("Error", f"Failed to connect to {host}:{port}\n\nCheck server logs for details.")
 
     def upload(self):
         filepath = filedialog.askopenfilename(title="Select file to upload")
         if not filepath:
             return
+            
+        self.log(f"[INFO] Uploading {os.path.basename(filepath)}...")
+        self.update_idletasks()
+        
         user = self.user_entry.get().encode()
-        if lib.client_upload(ctypes.byref(client), user, filepath.encode()) == 0:
-            self.log(f"[INFO] Uploaded: {os.path.basename(filepath)}")
+        result = lib.client_upload(ctypes.byref(client), user, filepath.encode())
+        
+        if result == 0:
+            self.log(f"[INFO] ✓ Uploaded: {os.path.basename(filepath)}")
             messagebox.showinfo("Success", f"Uploaded {os.path.basename(filepath)}")
         else:
-            self.log("[ERROR] Upload failed.")
-            messagebox.showerror("Error", "File upload failed.")
+            self.log(f"[ERROR] Upload failed for {os.path.basename(filepath)}")
+            messagebox.showerror("Error", "File upload failed. Check server logs.")
 
     def download(self):
         filename = simpledialog.askstring("Download File", "Enter filename to download:")
@@ -188,21 +237,31 @@ class LocalBinApp(tk.Tk):
         save_dir = filedialog.askdirectory(title="Select folder to save file")
         if not save_dir:
             return
+            
+        self.log(f"[INFO] Downloading {filename}...")
+        self.update_idletasks()
+        
         user = self.user_entry.get().encode()
-        if lib.client_download(ctypes.byref(client), user, filename.encode(), save_dir.encode()) == 0:
-            self.log(f"[INFO] Downloaded: {filename}")
-            messagebox.showinfo("Success", f"Downloaded {filename}")
+        result = lib.client_download(ctypes.byref(client), user, filename.encode(), save_dir.encode())
+        
+        if result == 0:
+            self.log(f"[INFO] ✓ Downloaded: {filename}")
+            messagebox.showinfo("Success", f"Downloaded {filename} to {save_dir}")
         else:
-            self.log("[ERROR] Download failed.")
+            self.log(f"[ERROR] Download failed for {filename}")
             messagebox.showerror("Error", "Download failed. File may not exist on server.")
 
     def disconnect(self):
         lib.client_disconnect(ctypes.byref(client))
-        self.log("[INFO] Disconnected from server.")
+        self.log("[INFO] Disconnected from server")
         self.upload_btn.config(state=tk.DISABLED)
         self.download_btn.config(state=tk.DISABLED)
         self.disconnect_btn.config(state=tk.DISABLED)
         self.connect_btn.config(state=tk.NORMAL)
+        self.host_entry.config(state=tk.NORMAL)
+        self.port_entry.config(state=tk.NORMAL)
+        self.user_entry.config(state=tk.NORMAL)
+        self.pass_entry.config(state=tk.NORMAL)
         messagebox.showinfo("LocalBin", "Disconnected from server.")
 
 
