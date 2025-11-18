@@ -17,6 +17,13 @@ void init_packet(Packet *pkt, CommandType cmd, const char *data) {
     }
 }
 
+void xor_crypt(unsigned char *data, size_t len, 
+               const unsigned char *key, size_t key_len) {
+    for (size_t i = 0; i < len; i++) {
+        data[i] ^= key[i % key_len];  // Each byte XORed with repeating key
+    }
+}
+
 /* Send packet: write header in network order, then payload */
 int send_packet(int sockfd, const Packet *pkt) {
     uint32_t net_cmd = htonl(pkt->command);
