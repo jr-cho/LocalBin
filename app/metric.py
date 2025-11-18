@@ -233,7 +233,7 @@ def display_results(data: Dict):
     else:
         print("  No successful downloads found")
     
-    print("\n\n🔌 CONNECTION STATISTICS:")
+    print("\n\n CONNECTION STATISTICS:")
     print("-" * 70)
     if data['connections']:
         for i, conn in enumerate(data['connections'], 1):
